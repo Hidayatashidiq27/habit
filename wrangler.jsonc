@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "streakin",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  // nodejs_compat wajib untuk adapter OpenNext (Supabase & Next.js pakai Node API).
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Variabel publik (aman diekspos, dibatasi RLS). Untuk secret gunakan:
+  //   npx wrangler secret put NAMA_SECRET
+  // NEXT_PUBLIC_* di-inline saat build, jadi harus tersedia waktu `cf:build`
+  // (mis. dari .env.local). Nilai di bawah dipakai runtime worker.
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://xyzuoxrpvtcgvunqbnqa.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_PzJuSOd061hbHbfagKEEdA_S3INo-HW",
+    "NEXT_PUBLIC_SITE_URL": "https://streakin.workers.dev"
+  }
+}

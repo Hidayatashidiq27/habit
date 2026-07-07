@@ -12,3 +12,7 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
+// Mengaktifkan akses binding Cloudflare saat `next dev` (dev-only, tidak memengaruhi build).
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+initOpenNextCloudflareForDev();

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AppShell from "@/components/AppShell";
@@ -38,7 +39,12 @@ export default async function ChallengeDetail({
     .maybeSingle();
 
   const cat = categoryMeta(challenge.category);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  // Ambil origin dari header request agar link undangan benar di semua environment
+  // (localhost / workers.dev / custom domain) tanpa perlu rebuild.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "";
+  const proto = h.get("x-forwarded-proto") ?? (host.includes("localhost") ? "http" : "https");
+  const siteUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
   const inviteUrl = `${siteUrl}/join/${challenge.invite_code}`;
   const todayWib = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
   const checkedInToday = participant?.last_checkin_date === todayWib;

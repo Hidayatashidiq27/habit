@@ -118,7 +118,39 @@ public/
 
 ---
 
-## ☁️ Deploy ke Produksi (Vercel + custom domain)
+## ☁️ Deploy ke Produksi
+
+### Opsi A — Cloudflare Workers (via OpenNext) ⭐
+
+App ini sudah dikonfigurasi untuk Cloudflare Workers memakai adapter
+[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) (dukung SSR +
+middleware + Node runtime). File terkait: `wrangler.jsonc`, `open-next.config.ts`.
+
+```bash
+# 1. Login ke akun Cloudflare (sekali, interaktif)
+npx wrangler login
+
+# 2. Build + deploy
+npm run cf:deploy
+```
+
+Deploy pertama menghasilkan URL `https://streakin.<akun>.workers.dev`.
+
+**Setelah deploy pertama:**
+1. Update `NEXT_PUBLIC_SITE_URL` di `wrangler.jsonc` → URL workers.dev asli kamu (untuk metadata/OG). Link undangan sudah otomatis benar dari header request, jadi tidak wajib rebuild untuk itu.
+2. **Supabase → Auth → URL Configuration:** tambahkan URL workers.dev ke **Site URL** dan **Redirect URLs** (`https://<url>/auth/callback`).
+3. Google OAuth redirect URI tetap ke callback Supabase (tidak berubah).
+
+**Preview lokal di runtime Workers (workerd):**
+```bash
+npm run cf:preview     # build + jalankan via wrangler dev
+```
+
+**Custom domain:** Cloudflare Dashboard → Workers → project `streakin` → Settings → Domains & Routes → tambahkan domain kamu. Lalu update Site URL/Redirect di Supabase.
+
+> **Catatan env saat build:** `NEXT_PUBLIC_*` di-inline saat `next build`. Nilai publik (URL & anon key Supabase) sudah ditaruh di `wrangler.jsonc > vars` dan juga terbaca dari `.env.local` saat build lokal. Untuk **secret** (mis. `SUPABASE_SERVICE_ROLE_KEY`, `MIDTRANS_SERVER_KEY`) gunakan `npx wrangler secret put NAMA` — jangan taruh di `wrangler.jsonc`.
+
+### Opsi B — Vercel + custom domain
 
 1. Push repo ke GitHub, import ke **Vercel**.
 2. Set environment variables di Vercel (sama seperti `.env.local`, ganti `NEXT_PUBLIC_SITE_URL` ke domain produksi).
