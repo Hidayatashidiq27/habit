@@ -127,7 +127,7 @@ create index if not exists idx_checkins_date
 -- HELPER: tanggal "hari ini" menurut WIB
 -- ===========================================================================
 create or replace function public.today_wib()
-returns date language sql stable as $$
+returns date language sql stable set search_path = public as $$
   select (now() at time zone 'Asia/Jakarta')::date;
 $$;
 
@@ -173,7 +173,7 @@ create trigger on_auth_user_created
 -- shield yang sudah dibeli — hanya menaikkan ke jatah minimum bulan ini.
 -- ===========================================================================
 create or replace function public._refill_shields(p_participant public.challenge_participants)
-returns int language plpgsql as $$
+returns int language plpgsql set search_path = public as $$
 declare
   v_month text := to_char(public.today_wib(), 'YYYY-MM');
   v_base  int;
@@ -229,7 +229,7 @@ $$;
 -- HELPER: award badge (idempotent) + notifikasi
 -- ===========================================================================
 create or replace function public._award_badge(p_user uuid, p_type text, p_challenge uuid)
-returns void language plpgsql as $$
+returns void language plpgsql set search_path = public as $$
 begin
   insert into public.badges (user_id, badge_type, challenge_id)
   values (p_user, p_type, p_challenge)
@@ -358,7 +358,8 @@ $$;
 -- ===========================================================================
 -- VIEW: leaderboard all-time per challenge (join ke profil)
 -- ===========================================================================
-create or replace view public.challenge_leaderboard as
+create or replace view public.challenge_leaderboard
+with (security_invoker = on) as
 select
   cp.challenge_id,
   cp.user_id,
@@ -498,5 +499,18 @@ on conflict (id) do nothing;
 drop policy if exists "proof upload own" on storage.objects;
 create policy "proof upload own" on storage.objects for insert to authenticated
   with check (bucket_id = 'proofs' and (storage.foldername(name))[1] = auth.uid()::text);
-drop policy if exists "proof read all" on storage.objects;
-create policy "proof read all" on storage.objects for select using (bucket_id = 'proofs');
+-- Bucket 'proofs' publik: URL objek dapat diakses tanpa policy SELECT, jadi tidak
+-- perlu policy read broad (yang justru membolehkan listing seluruh file).
+
+-- ===========================================================================
+-- HARDENING GRANTS: batasi eksekusi fungsi sensitif
+-- ===========================================================================
+-- Fungsi trigger, bukan RPC — tutup dari semua role.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+-- RPC inti hanya untuk user login (bukan anon).
+revoke all on function public.do_checkin(uuid, text) from public, anon;
+grant execute on function public.do_checkin(uuid, text) to authenticated;
+revoke all on function public.join_challenge(uuid, text) from public, anon;
+grant execute on function public.join_challenge(uuid, text) to authenticated;
+revoke all on function public.challenge_preview(text) from public, anon;
+grant execute on function public.challenge_preview(text) to authenticated;
