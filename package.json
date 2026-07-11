@@ -5,8 +5,7 @@
   "description": "Streakin — social habit-challenge & leaderboard PWA (Indonesia)",
   "scripts": {
     "dev": "next dev",
-    "build": "opennextjs-cloudflare build",
-    "next:build": "next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "cf:build": "opennextjs-cloudflare build",

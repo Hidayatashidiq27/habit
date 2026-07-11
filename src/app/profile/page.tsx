@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AppShell from "@/components/AppShell";
 import ActivityGrid from "@/components/ActivityGrid";
+import EnableReminders from "@/components/EnableReminders";
 import SignOutButton from "@/components/SignOutButton";
 import { badgeMeta } from "@/lib/categories";
 
@@ -137,6 +138,11 @@ export default async function ProfilePage() {
         ) : (
           <p className="text-sm text-slate-400">Belum ikut challenge apa pun.</p>
         )}
+      </div>
+
+      {/* Pengingat check-in (Web Push) */}
+      <div className="mt-3">
+        <EnableReminders userId={user.id} />
       </div>
 
       <div className="mt-4">
